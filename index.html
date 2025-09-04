@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuoteVerse – Nepali & English Quotes</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@1,400&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(270deg, #FF6B6B, #4ECDC4, #556270, #FFD93D);
+      background-size: 800% 800%;
+      animation: gradientShift 15s ease infinite;
+      transition: color 0.3s ease;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      padding: 40px;
+      max-width: 600px;
+      width: 95%;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    /* QOTD Box */
+    .qotd {
+      background: #0077ff;
+      color: white;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      font-weight: 600;
+      font-size: 1.05em;
+      position: relative;
+      overflow: hidden;
+    }
+    .qotd span {
+      display: inline-block;
+      transition: max-height 0.5s ease, opacity 0.5s ease;
+      max-height: 200px;
+      opacity: 1;
+    }
+    .qotd.collapsed span {
+      max-height: 0;
+      opacity: 0;
+    }
+    .qotd button {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qotd button:hover {
+      background: rgba(255,255,255,0.35);
+    }
+
+    /* Quote */
+    .quote {
+      font-family: 'Merriweather', serif;
+      font-size: 1.5em;
+      font-style: italic;
+      color: #222;
+      margin-bottom: 20px;
+      min-height: 80px;
+      transition: opacity 0.4s ease;
+    }
+    .author {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 20px;
+    }
+
+    /* Buttons */
+    button, select {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 25px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 0.95em;
+      font-family: 'Poppins', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.3s ease;
+    }
+    .primary { background-color: #0077ff; color: white; }
+    .primary:hover { background-color: #0055cc; }
+    .secondary { background-color: #f0f0f0; color: #333; }
+    .secondary:hover { background-color: #ddd; }
+
+    /* Dark Theme */
+    .dark-theme { color: #f0f0f0; }
+    .dark-theme .container { background: rgba(46, 46, 46, 0.85); color: #fff; }
+    .dark-theme .quote { color: #fff; }
+    .dark-theme .author { color: #bbb; }
+    .dark-theme .qotd { background: #0055cc; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 25px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 1000;
+    }
+    .toast.show { opacity: 1; pointer-events: auto; }
+
+    /* Favorites modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 70%;
+      overflow-y: auto;
+    }
+    .dark-theme .modal-content { background: #2e2e2e; color: #fff; }
+    .close-btn { float: right; cursor: pointer; font-size: 1.2em; }
+    .favorite-item { margin: 10px 0; padding: 10px; border-bottom: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Quote of the Day -->
+    <div class="qotd" id="qotdBox">
+      🌟 Quote of the Day:
+      <span id="qotd"></span>
+      <button id="toggleQotd"><i class="fa-solid fa-chevron-up"></i></button>
+    </div>
+
+    <!-- Random Quote Generator -->
+    <div class="quote" id="quote">Loading...</div>
+    <div class="author" id="author"></div>
+    <button class="primary" onclick="generateQuote()"><i class="fa-solid fa-shuffle"></i> New Quote</button>
+    <button class="secondary" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i> Theme</button>
+    <button class="secondary" onclick="saveFavorite()"><i class="fa-solid fa-heart"></i> Save</button>
+    <button class="secondary" onclick="shareQuote()"><i class="fa-solid fa-share-alt"></i> Share</button>
+    <button class="secondary" onclick="copyQuote()"><i class="fa-solid fa-copy"></i> Copy</button>
+    <button class="secondary" onclick="showFavorites()"><i class="fa-solid fa-star"></i> Favorites</button>
+  </div>
+
+  <!-- Favorites Modal -->
+  <div class="modal" id="favoritesModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeFavorites()">&times;</span>
+      <h2>⭐ Your Favorite Quotes</h2>
+      <div id="favoritesList"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const quotes = [
+      { text: "The best way to predict the future is to create it.", author: "Peter Drucker" },
+      { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+      { text: "Don’t watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+      { text: "It always seems impossible until it’s done.", author: "Nelson Mandela" },
+      { text: "Push yourself, because no one else is going to do it for you.", author: "Unknown" },
+      { text: "Great things never come from comfort zones.", author: "Unknown" },
+      { text: "Dream it. Wish it. Do it.", author: "Unknown" },
+      { text: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
+      { text: "You are stronger than you think.", author: "Unknown" },
+      { text: "Wake up with determination. Go to bed with satisfaction.", author: "Unknown" },
+      { text: "जीवनमा असफलता छैन, सिकाइ मात्र छ।", author: "बुद्ध" },
+      { text: "हामीले परिवर्तन आफैबाट सुरु गर्नुपर्छ।", author: "गान्धी" },
+      { text: "सपना देख, विश्वास गर अनि मिहिनेत गर।", author: "अज्ञात" },
+      { text: "समय सबैभन्दा ठूलो गुरु हो।", author: "अज्ञात" },
+      { text: "तिमीले जे सोच्यौ त्यही बन्छौ।", author: "बुद्ध" },
+      { text: "हास्नु भनेको आधा जित हो।", author: "अज्ञात" },
+      { text: "शान्ति भित्रबाट आउँछ, बाहिर होइन।", author: "बुद्ध" },
+      { text: "तिमी आफै प्रकाश बन।", author: "बुद्ध" },
+      { text: "म त केवल एक सिकाइको प्रक्रियामा छु।", author: "अज्ञात" },
+      { text: "सपना हेर्न नछाड, किनकि सपना नै भविष्य बनाउँछ।", author: "कलाम" },
+    ];
+
+    const quoteElement = document.getElementById('quote');
+    const authorElement = document.getElementById('author');
+    const toast = document.getElementById('toast');
+    const qotdSpan = document.getElementById('qotd');
+    const qotdBox = document.getElementById('qotdBox');
+    const toggleQotdBtn = document.getElementById('toggleQotd');
+
+    let currentQuote = '';
+    let currentAuthor = '';
+    let qotdCollapsed = false;
+
+    function generateQuote() {
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      currentQuote = quotes[randomIndex].text;
+      currentAuthor = quotes[randomIndex].author;
+
+      quoteElement.style.opacity = 0;
+      setTimeout(() => {
+        quoteElement.innerText = `"${currentQuote}"`;
+        authorElement.innerText = `– ${currentAuthor}`;
+        quoteElement.style.opacity = 1;
+      }, 400);
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-theme");
+    }
+
+    function saveFavorite() {
+      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+      favorites.push({ quote: currentQuote, author: currentAuthor });
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      showToast("✅ Quote saved to favorites!");
+    }
+
+    function showFavorites() {
+      const modal = document.getElementById("favoritesModal");
+      const list = document.getElementById("favoritesList");
+      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+      if (favorites.length === 0) {
+        list.innerHTML = "<p>No favorites saved yet!</p>";
+      } else {
+        list.innerHTML = favorites.map(f => `
+          <div class="favorite-item">
+            <p>"${f.quote}"</p>
+            <small>– ${f.author}</small>
+          </div>
+        `).join("");
+      }
+      modal.style.display = "flex";
+    }
+
+    function closeFavorites() {
+      document.getElementById("favoritesModal").style.display = "none";
+    }
+
+    function shareQuote() {
+      const shareText = `"${currentQuote}" – ${currentAuthor}`;
+      if (navigator.share) {
+        navigator.share({ title: "Motivational Quote", text: shareText, url: window.location.href });
+      } else {
+        navigator.clipboard.writeText(shareText);
+        showToast("📋 Quote copied to clipboard!");
+      }
+    }
+
+    function copyQuote() {
+      navigator.clipboard.writeText(`"${currentQuote}" – ${currentAuthor}`);
+      showToast("📋 Quote copied!");
+    }
+
+    function showToast(message) {
+      toast.innerText = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
+    // 🌟 Quote of the Day
+    function loadQuoteOfTheDay() {
+      const today = new Date().toDateString();
+      let qotdData = JSON.parse(localStorage.getItem("qotd") || "{}");
+
+      if (!qotdData.date || qotdData.date !== today) {
+        const randomIndex = Math.floor(Math.random() * quotes.length);
+        qotdData = {
+          date: today,
+          text: quotes[randomIndex].text,
+          author: quotes[randomIndex].author
+        };
+        localStorage.setItem("qotd", JSON.stringify(qotdData));
+      }
+
+      qotdSpan.innerText = `"${qotdData.text}" – ${qotdData.author}`;
+    }
+
+    // Toggle QOTD collapse
+    toggleQotdBtn.addEventListener("click", () => {
+      qotdBox.classList.toggle("collapsed");
+      qotdCollapsed = !qotdCollapsed;
+      toggleQotdBtn.innerHTML = qotdCollapsed 
+        ? '<i class="fa-solid fa-chevron-down"></i>' 
+        : '<i class="fa-solid fa-chevron-up"></i>';
+    });
+
+    window.onload = function() {
+      loadQuoteOfTheDay();
+      generateQuote();
+    };
+  </script>
+</body>
+</html>
